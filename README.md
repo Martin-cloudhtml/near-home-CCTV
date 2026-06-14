@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>家附近週邊道路監控 NVR Ver1.0</title>
+
+<style>
+html, body {
+  margin:0;
+  height:100%;
+  background:#000;
+  font-family: system-ui;
+}
+
+/* 🖥️ 電腦監控牆 */
+.grid {
+  height:100vh;
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(33.33%, 1fr));
+  grid-auto-rows: 1fr;
+}
+
+.tile {
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+}
+
+iframe {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:none;
+}
+
+/* CAM 標籤 */
+.label {
+  position:absolute;
+  top:8px;
+  left:8px;
+  z-index:2;
+
+  background:rgba(0,0,0,.55);
+  padding:6px 10px;
+  border-radius:8px;
+  font-size:12px;
+  color:#4ade80;
+  backdrop-filter: blur(4px);
+}
+
+/* 🔴 主畫面 */
+#mainView {
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:999;
+  display:none;
+}
+
+#mainFrame {
+  width:100%;
+  height:100%;
+  border:none;
+}
+
+/* 左上控制 */
+.topLeft {
+  position:fixed;
+  top:10px;
+  left:10px;
+  z-index:1000;
+  display:none;
+  gap:10px;
+  align-items:center;
+}
+
+.backBtn {
+  background:rgba(0,0,0,.6);
+  border:1px solid #4ade80;
+  color:#4ade80;
+  padding:6px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+.hint {
+  color:#aaa;
+  font-size:12px;
+}
+
+/* 📱 手機修正（只修變扁問題） */
+@media (max-width:768px){
+
+  .grid {
+    height:auto;
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    gap:8px;
+    padding:8px;
+  }
+
+  .tile {
+    position:relative;
+    width:100%;
+    aspect-ratio:16 / 9;
+    overflow:hidden;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="grid" id="grid"></div>
+
+<div id="mainView">
+  <iframe id="mainFrame"></iframe>
+</div>
+
+<div class="topLeft" id="topLeft">
+  <button class="backBtn" onclick="closeMain()">← 返回監控牆 (ESC)</button>
+  <div class="hint" id="camName"></div>
+</div>
+
+<script>
+
+const cams = [
+  { name:"CAM-01 國民路與大同路二段 北向南 火雞肉飯", url:"https://trafficvideo.tainan.gov.tw/705eee1e" },
+  { name:"CAM-02 中華路橋 大同路 中華南路 西向東", url:"https://trafficvideo5.tainan.gov.tw/2e32132e" },
+  { name:"CAM-03 大林國宅 大同路健康路口 南向北", url:"https://trafficvideo.tainan.gov.tw/df17076a" },
+  { name:"CAM-04 健康路 水都台鹽", url:"https://trafficvideo2.tainan.gov.tw/539b8083" },
+  { name:"CAM-05 中華南路二段中華西路一段 北向南", url:"https://trafficvideo4.tainan.gov.tw/cdab5ef2" },
+  { name:"CAM-06 二仁路文華路 奇美博物館 北向南", url:"https://trafficvideo2.tainan.gov.tw/c4e4218e" }
+];
+
+let currentIndex = -1;
+
+const grid = document.getElementById("grid");
+
+/* 建立監控牆 */
+cams.forEach((c,i)=>{
+
+  const tile = document.createElement("div");
+  tile.className = "tile";
+
+  tile.innerHTML = `
+    <div class="label">${c.name}</div>
+    <iframe src="${c.url}"></iframe>
+  `;
+
+  tile.onclick = () => openMain(i);
+
+  grid.appendChild(tile);
+});
+
+/* 主畫面 */
+function openMain(i){
+  currentIndex = i;
+
+  document.getElementById("mainView").style.display = "block";
+  document.getElementById("mainFrame").src = cams[i].url;
+
+  document.getElementById("topLeft").style.display = "flex";
+  document.getElementById("camName").innerText = cams[i].name;
+}
+
+/* 關閉主畫面 */
+function closeMain(){
+  currentIndex = -1;
+
+  document.getElementById("mainView").style.display = "none";
+  document.getElementById("mainFrame").src = "";
+
+  document.getElementById("topLeft").style.display = "none";
+}
+
+/* 🧠 只在桌機啟用鍵盤 */
+const isTouchDevice =
+  ("ontouchstart" in window) ||
+  navigator.maxTouchPoints > 0;
+
+if (!isTouchDevice) {
+  window.addEventListener("keydown", (e) => {
+
+    if (e.key === "Escape") {
+      closeMain();
+    }
+
+    const num = parseInt(e.key);
+    if (num >= 1 && num <= cams.length) {
+      openMain(num - 1);
+    }
+  });
+}
+
+</script>
+
+</body>
+</html>
